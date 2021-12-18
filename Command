@@ -1,0 +1,767 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Linq;
+using System.Collections.Generic;
+
+namespace shapes
+{
+    class Program
+    {
+        //create the canvas
+        public static Canvas canvas = new Canvas(500, 500);
+        //create a new user
+        public static User user = new User();
+
+        static void Main(string[] args)
+        {
+            Console.WriteLine("\nPress \"H\" for list of commands \n");
+            while(true)
+            {
+                //read in the user input
+                String input = Console.ReadLine();
+                input = input.ToLower();
+                //case if user wishes to add a shape to the canvas
+                if(input.Contains("a"))
+                {
+                    user.Action(new addShape(input, canvas));
+                }
+                //case if the user wishes to see list of shapes
+                else if(input.Equals("l"))
+                {
+                    user.Action(new shapeList());
+                }
+                //case if the user wishes to undo a change
+                else if(input.Equals("u"))
+                {
+                    user.Undo();
+                }
+                //case if the user wishes to redo a change
+                else if(input.Equals("r"))
+                {
+                    user.Redo();
+                }
+                //case if the user wishes to clear the canvas
+                else if(input.Equals("c"))
+                {
+                    user.Action(new clear(canvas));
+                }
+                //case if the user wishes to save the canvas to an svg file
+                else if(input.Equals("s"))
+                {
+                    //convert the canvas to an svg file
+                    user.Action(new save(canvas));
+                }
+                //case if the user wishes to print the canvas to the console
+                else if(input.Equals("p"))
+                {
+                    //print the canvas to the console
+                    user.Action(new print(canvas));
+                }
+                //case if the user wishes to know the commands
+                else if(input.Equals("h"))
+                {
+                    user.Action(new help());
+                }
+                //case if the user wishes to quit
+                else if(input.Equals("q"))
+                {
+                    Console.WriteLine("\nQuitting program...\n");
+                    break;
+                }
+                //case if invalid command
+                else
+                {
+                    Console.WriteLine("\nError unknown command, for list of commands type \"Help\".\n");
+                }   
+            }
+        }
+    }
+    // ------------------- canvas class -------------------
+    public class Canvas
+    {
+        //canvas dimensions
+        public int width { get; set;}
+        public int height { get; set;}
+        //create a list to store the shapes on the canvas
+        public List<Shape> shapeList = new List<Shape>();
+        //default canvas constructor
+        public Canvas()
+        {
+            width = 100;
+            height = 100;
+        }
+        //canvas constructor
+        public Canvas(int w, int h)
+        {
+            width = w;
+            height = h;
+        }
+        //method to add a shape to the canvas
+        public void Add(Shape shape)
+        {
+            shapeList.Add(shape);
+        }
+        //method to remove a shape from the cnavas
+        public void Remove(Shape shape)
+        {
+            shapeList.Remove(shape);
+        }
+        //method to clear the cnavas
+        public void Clear()
+        {
+            shapeList.Clear();
+        }
+        //canvas print method
+        public override string ToString()
+        {
+            return "<svg width=\"" + width + "\" " + "hight=\"" + height + "\">" + "\n" + "</svg>";
+        }
+    }
+    // ------------------- parent shape class -------------------
+    public class Shape
+    {
+        //stroke-width var
+        public string lineThick { get; set; }
+        //stroke var 
+        public string lineColor { get; set; }
+        //fill var
+        public string fillColor { get; set; }
+        //z-index
+        public int index { get; set; }
+        //default shape with styling
+        public Shape()
+        {
+            lineThick = "5";
+            lineColor = "black";
+            fillColor = "transparent";
+        }
+        //styling method
+        public void style(string width, string stroke, string fill)
+        {
+            lineThick = width;
+            lineColor = stroke;
+            fillColor = fill;
+        }
+        //virtual ToConsole method
+        public virtual string ToConsole()
+        {
+            return "";
+        }
+    }
+    // ------------------- rectangle child class -------------------
+    class Rect : Shape
+    {
+        //x position
+        public int xPos { get; set; }
+        //y position
+        public int yPos { get; set; }
+        //width
+        public int width { get; set; }
+        //heihgt
+        public int height { get; set; }
+        //default rectangle constructor
+        public Rect() : base()
+        {
+            xPos = 10;
+            yPos = 10;
+            width = 30;
+            height = 30;
+            index = 1;
+        }
+        //rectangle constructor
+        public Rect(int x, int y, int w, int h, int z) : base()
+        {
+            xPos = x;
+            yPos = y;
+            width = w;
+            height = h;
+            index = z;
+        }
+        //rectangle print method
+        public override string ToString()
+        {
+            return "<rect x=\"" + xPos + "\" " + "y=\"" + yPos + "\" " + "width=\"" + width + "\" " + "height=\"" + height + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //rectangle to console method
+        public override string ToConsole()
+        {
+            return "Rectangle (x = " + xPos + ", y = " + yPos +", w = " + width +", h = " + height + ")";
+        }
+    }
+    // ------------------- circle child class -------------------
+    class Circle : Shape
+    {
+        //radius
+        public int rad { get; set; }
+        //x centre
+        public int cenX { get; set; }
+        //y centre
+        public int cenY { get; set; }
+        //default circle constructor
+        public Circle() : base()
+        {
+            rad = 25;
+            cenX = 75;
+            cenY = 20;
+            index = 1;
+        }
+        //circle constructor
+        public Circle(int r, int cX, int cY, int z) : base()
+        {
+            rad = r;
+            cenX = cX;
+            cenY = cY;
+            index = z;
+        }
+        //circle print method
+        public override string ToString()
+        {
+            return "<circle cx=\"" + cenX + "\" " + "cy=\"" + cenY + "\" " + "r=\"" + rad + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //circle to console method
+        public override string ToConsole()
+        {
+            return "Circle (cx = " + cenX + ", cy = " + cenY + ", r = " + rad + ")";
+        }
+    }
+    // ------------------- ellipse child class -------------------
+    class Ellipse : Shape
+    {
+        //x radius
+        public int radX { get; set; }
+        //y radius
+        public int radY { get; set; }
+        //x centre
+        public int cenX { get; set; }
+        //y centre
+        public int cenY { get; set; }
+        //default ellipse constructor
+        public Ellipse() : base()
+        {
+            radX = 75;
+            radY = 75;
+            cenX = 20;
+            cenY = 5;
+            index = 1;
+        }
+        //ellipse constructor
+        public Ellipse(int rX, int rY, int cX, int cY, int z) : base()
+        {
+            radX = rX;
+            radY = rY;
+            cenX = cX;
+            cenY = cY;
+            index = z;
+        }
+        //ellipse print method
+        public override string ToString()
+        {
+            return "<ellipse cx=\"" + cenX + "\" " + "cy=\"" + cenY + "\" " + "rx=\"" + radX + "\" " + "ry=\"" + radY + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //ellipse to console method
+        public override string ToConsole()
+        {
+            return "Ellipse (cx = " + cenX + ", cy = " + cenY +", rx = " + radX +", ry = " + radY + ")";
+        }
+    }
+    // ------------------- line child class -------------------
+    class Line : Shape
+    {
+        //x point 1
+        public int xPoint1 { get; set; }
+        //y point 1
+        public int yPoint1 { get; set; }
+        //x point 2
+        public int xPoint2 { get; set; }
+        //y point 2
+        public int yPoint2 { get; set; }
+        //default line constructor
+        public Line() : base()
+        {
+            xPoint1 = 10;
+            yPoint1 = 10;
+            xPoint2 = 150;
+            yPoint2 = 150;
+            index = 1;
+        }
+        //line constructor
+        public Line(int x1, int y1, int x2, int y2, int z) : base()
+        {
+            xPoint1 = x1;
+            yPoint1 = y1;
+            xPoint2 = x2;
+            yPoint2 = y2;
+            index = z;
+        }
+        //line print method
+        public override string ToString()
+        {
+            return "<line x1=\"" + xPoint1 + "\" " + "y1=\"" + yPoint1 + "\" " + "x2=\"" + xPoint2 + "\" " + "y2=\"" + yPoint2 + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "/>";
+        }
+        //line to console method
+        public override string ToConsole()
+        {
+            return "Line (x1 = " + xPoint1 + ", y1 = " + yPoint1 +", x2 = " + xPoint2 +", y2 = " + yPoint2 + ")";
+        }
+    }
+    // ------------------- polyline child class -------------------
+    class PolyLine : Shape
+    {
+        //string of points
+        public string points { get; set; }
+        //default polyline
+        public PolyLine() : base()
+        {
+            points = "60 110 65 120 70 115 75 130 80 125 85 140 90 135 95 150 100 145";
+        }
+        //polyline constructor
+        public PolyLine(string p, int z) : base()
+        {
+            points = p;
+            index = z;
+        }
+        //polyline print method
+        public override string ToString()
+        {
+            return "<polyline points=\"" + points + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //polyline to console method
+        public override string ToConsole()
+        {
+            return "Polyline (points = " + points + ")";
+        }
+    }
+    // ------------------- polygon child class -------------------
+    class Polygon : Shape
+    {
+        //string of points
+        public string points{ get; set; }
+        //default polygon
+        public Polygon() : base()
+        {
+            points = "50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180";
+        }
+        //polygon constructor
+        public Polygon(string p, int z) : base()
+        {
+            points = p;
+            index = z;
+        }
+        //polygon print method
+        public override string ToString()
+        {
+            return "<polygon points=\"" + points + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //polygon to console method
+        public override string ToConsole()
+        {
+            return "Polygon (points = " + points + ")";
+        }
+    }
+    // ------------------- path child class -------------------
+    class Path : Shape
+    {
+        //string of points
+        public string path { get; set; }
+        //default path
+        public Path() : base()
+        {
+            path = "M20,230 Q40,205 50,230 T90,230";
+        }
+        //path constructor
+        public Path(string p, int z) : base()
+        {
+            path = p;
+            index = z;
+        }
+        //path print method
+        public override string ToString()
+        {
+            return "<path d=\"" + path + "\" " + "stroke=\"" + lineColor + "\" " + "stroke-width=\"" + lineThick + "\" " + "fill=\"" + fillColor + "\" " + "/>";
+        }
+        //path to console method
+        public override string ToConsole()
+        {
+            return "Path (d = " + path + ")";
+        }
+    }
+    // -------------------- Command Design Pattern -----------------------
+    // -------------------- User Class --------------------
+    public class User
+    {
+        //create Lists to store commands
+        public static Stack<Command> commands;
+        public static Stack<Command> redoComms;
+        //default user constructor
+        public User()
+        {
+            //reset the console with a new user
+            Reset();
+        }
+        //method to reset the user stacks
+        public void Reset()
+        {
+            commands = new Stack<Command>();
+            redoComms = new Stack<Command>();
+        }
+        //action method
+        public void Action(Command c)
+        {
+            //add the command to the command list
+            commands.Push(c);
+            //clear the redo stack
+            redoComms.Clear();
+            //get the type of the command
+            Type t = c.GetType();
+            //do the respective commands
+            if(t.Equals(typeof(addShape)))
+            {
+                c.Do();
+            }
+            if(t.Equals(typeof(clear)))
+            {
+                c.Do();
+            }
+            if(t.Equals(typeof(shapeList)))
+            {
+                c.Do();
+            }
+            if(t.Equals(typeof(help)))
+            {
+                c.Do();
+            }
+            if(t.Equals(typeof(save)))
+            {
+                c.Do();
+            }
+            if(t.Equals(typeof(print)))
+            {
+                c.Do();
+            }
+        }
+        // Undo method
+        public void Undo()
+        {
+            //check if you can undo
+            if(commands.Count > 0)
+            {
+                //remove the command from the commands list
+                Command c = commands.Pop();
+                //call the undo method
+                c.Undo();
+                //add the command to the redo list
+                redoComms.Push(c);
+            }
+            else
+            {
+                Console.WriteLine("Error: nothing to undo.\n");
+            }
+        }
+        // Redo method
+        public void Redo()
+        {
+            //check if you can redo
+            if (redoComms.Count > 0)
+            {
+                //remove the command from the redo list
+                Command c = redoComms.Pop();
+                //call the do method
+                c.Do();
+                //add the command to the commands list
+                commands.Push(c);
+            }
+            else
+            {
+                Console.WriteLine("Error: nothing to redo.\n");
+            }
+        }
+    }
+    // -------------------- Command class --------------------
+    public abstract class Command
+    {
+        public abstract void Do();
+        public abstract void Undo();
+    }
+    // -------------------- add shape child class --------------------
+    public class addShape : Command
+    {
+        //create a random int generator
+        public static Random rnd = new Random();
+        //create variables for the class
+        public Shape shape;
+        public Canvas canvas;
+        public string shapeName;
+        //addShape method constructor
+        public addShape(String input, Canvas theCanvas)
+        {
+            //split the input by parameters
+            string[] parameters = input.Split();
+            //take the shape type
+            shapeName = parameters[1];
+            canvas = theCanvas;
+        }
+        //override the do command to add the shape to the canvas
+        public override void Do()
+        {
+            switch(shapeName)
+            {
+                case "rectangle":
+                    //create a random rectangle
+                    Rect rect = new Rect(rnd.Next(0,500),rnd.Next(0,500),rnd.Next(10,250),rnd.Next(10,250),1);
+                    //add it to the canvas
+                    canvas.Add(rect);
+                    //display message
+                    Console.WriteLine("Rectangle (x = " + rect.xPos + ", y = " + rect.yPos + ", w = " + rect.width + ", h = " + rect.height + ") added to canvas. \n");
+                break;
+                case "circle":
+                    //create the random circle
+                    Circle circle = new Circle(rnd.Next(10,100),rnd.Next(0,500),rnd.Next(0,500),1);
+                    //add it to the canvas
+                    canvas.Add(circle);
+                    //display message
+                    Console.WriteLine("Circle (x = " + circle.cenX + ", y = " + circle.cenY + ", r = " + circle.rad + ") added to canvas. \n");
+                break;
+                case "ellipse":
+                    //create the random ellipse
+                    Ellipse ellipse = new Ellipse(rnd.Next(1,100),rnd.Next(1,100),rnd.Next(1,500),rnd.Next(1,500),1);
+                    //add it to the canvas
+                    canvas.Add(ellipse);
+                    //display message
+                    Console.WriteLine("Ellipse (radX = " + ellipse.radX + ", radY = " + ellipse.radY + ", cenX = " + ellipse.cenX + ", cenY = " + ellipse.cenX + ") added to canvas. \n");
+                break;
+                case "line":
+                    //create the random line
+                    Line line = new Line(rnd.Next(0,500),rnd.Next(0,500),rnd.Next(0,500),rnd.Next(0,500),1);
+                    //add it to the canvas
+                    canvas.Add(line);
+                    //display message
+                    Console.WriteLine("Line (x1 = " + line.xPoint1 + ", y1 = " + line.xPoint2 + ", x2 = " + line.yPoint1 + ", y2 = " + line.yPoint2 + ") added to canvas. \n");
+                break;
+                case "polyline":
+                    //create int for random point amount
+                    int p1 = rnd.Next(3,15);
+                    //create stringbuilder to stroe points
+                    var sb1 = new StringBuilder();
+                    //loop p times
+                    for(int i = 0; i < p1; i++)
+                    {
+                        //create a point
+                        int j = rnd.Next(0,500);
+                        //add it to the stringbuilder
+                        sb1.Append(" " + j.ToString());
+                    }
+                    //convert the stringbuilder to string
+                    string points1 = sb1.ToString();
+                    //create the random polyline
+                    PolyLine pline = new PolyLine(points1,1);
+                    //add it to the canvas
+                    canvas.Add(pline);
+                    //display message
+                    Console.WriteLine("polyline (points =" + pline.points + ") added to canvas. \n");
+                break;
+                case "polygon":
+                    //create int for random point amount
+                    int p2 = rnd.Next(3,15);
+                    //create stringbuilder to stroe points
+                    var sb2 = new StringBuilder();
+                    //loop p times
+                    for(int i = 0; i < p2; i++)
+                    {
+                        //create a point
+                        int j = rnd.Next(0,500);
+                        //add it to the stringbuilder
+                        sb2.Append(" " + j.ToString());
+                    }
+                    //convert the stringbuilder to string
+                    string points2 = sb2.ToString();
+                    //create the random polygon
+                    Polygon polygon = new Polygon(points2,1);
+                    //add it to the canvas
+                    canvas.Add(polygon);
+                    //display message
+                    Console.WriteLine("Polygon (points =" + polygon.points + ") added to canvas. \n");
+                break;
+                case "path":
+                    //create int for random point amount
+                    int p3 = rnd.Next(3,10);
+                    //create stringbuilder to stroe points
+                    var sb3 = new StringBuilder();
+                    //create a string of possible commands
+                    string pOptions = "MLHVCSQT";
+                    //loop p times
+                    for(int i = 0; i < p3; i++)
+                    {
+                        //create some points
+                        int j = rnd.Next(0,500), k = rnd.Next(0,500), l = rnd.Next(0,500), m = rnd.Next(0,500), n = rnd.Next(0,500), o = rnd.Next(0,500);
+                        //choose a command
+                        char comm = pOptions[rnd.Next(0,7)];
+                        //if comm is H or V only 1 point is needed
+                        if(comm == 'H' || comm == 'V')
+                        {
+                            //add commmand and points to the stringbuilder
+                            sb3.Append(" " + comm + " " + j.ToString());
+                        }
+                        //if comm is M, L or T then  2 points are needed
+                        if(comm == 'M' || comm == 'L' || comm == 'T')
+                        {
+                            sb3.Append(" " + comm + " " + j.ToString() + " " + k.ToString());
+                        }
+                        //if comm is S or Q then 4 points are needed
+                        if(comm == 'S' || comm == 'Q')
+                        {
+                            sb3.Append(" " + comm + " " + j.ToString() + " " + k.ToString() + ", " + l.ToString() + " " + m.ToString());
+                        }
+                        //if comm is C then all 6 points are needed
+                        if(comm == 'C')
+                        {
+                            sb3.Append(" " + comm + " " + j.ToString() + " " + k.ToString() + ", " + l.ToString() + " " + m.ToString() + ", " + n.ToString() + " " + o.ToString());
+                        }
+                        //close off the path with a Z
+                        sb3.Append(" Z");
+                    }
+                    //convert the stringbuilder to string
+                    string points = sb3.ToString();
+                    //create the random path
+                    Path path = new Path(points,1);
+                    //add it to the canvas
+                    canvas.Add(path);
+                    //display message
+                    Console.WriteLine("Path (points =" + path.path + ") added to canvas. \n");
+                break;
+                default:
+                    Console.WriteLine("Error: invalid shape.");
+                break;
+            }
+        }
+        //override the undo command to remove the shape from the canvas
+        public override void Undo()
+        {
+            Console.WriteLine("Shape " + shapeName + " removed from canvas.\n");
+            canvas.Remove(shape);
+        }
+    }
+    // -------------------- clear child class --------------------
+    public class clear : Command
+    {
+        //create variable for the class
+        public Canvas canvas;
+        //clear method constructor
+        public clear(Canvas theCanvas)
+        {
+            canvas = theCanvas;
+        }
+        //override the do command to clea rthe canvas
+        public override void Do()
+        {
+            canvas.Clear();
+            Console.WriteLine("\nCleared the canvas.\n");
+        }
+        //no undo necessary
+        public override void Undo()
+        {
+            Console.WriteLine("Cannot undo action: clearing canvas\n");
+        }
+    }
+    // -------------------- shape list child class --------------------
+    public class shapeList : Command
+    {
+        public override void Do()
+        {
+            Console.WriteLine("\nValid Shapes:\n");
+            Console.WriteLine("Rectangle");
+            Console.WriteLine("Circle");
+            Console.WriteLine("Ellipse");
+            Console.WriteLine("Line");
+            Console.WriteLine("PolyLine");
+            Console.WriteLine("Polygon");
+            Console.WriteLine("Path\n");
+        }
+        public override void Undo()
+        {
+            Console.WriteLine("Cannot undo action: toggle list of shapes\n");
+        }
+    }
+    // -------------------- help child class --------------------
+    public class help : Command
+    {
+        public override void Do()
+        {
+            Console.WriteLine("\ntype \"A <shape>\" to add a random shape to the canvas");
+            Console.WriteLine("Example: A rectangle\n");
+            Console.WriteLine("type \"L\" for a list of valid shapes\n");
+            Console.WriteLine("type \"U\" to undo an action");
+            Console.WriteLine("type \"R\" to redo an action");
+            Console.WriteLine("type \"C\" to clear the canvas\n");
+            Console.WriteLine("type \"S\" to save the canvas to an svg file");
+            Console.WriteLine("type \"P\" to print the canvas to the console\n");
+            Console.WriteLine("type \"Q\" to quit the program\n");
+            Console.WriteLine("type \"H\" to see this menu again\n");
+        }
+        public override void Undo()
+        {
+            Console.WriteLine("Cannot undo action: toggle help list\n");
+        }
+    }
+    // -------------------- save child class --------------------
+    public class save : Command
+    {
+        //create variable for the class
+        Canvas canvas;
+        //save canvas to SVG file method constructor
+        public save(Canvas theCanvas)
+        {
+            canvas = theCanvas;
+        }
+        public override void Do()
+        {
+           //create an SVG file
+            string fileName = @".\Canvas.svg";
+            //sort the shapes in decending order of index
+            canvas.shapeList = canvas.shapeList.OrderByDescending(x => x.index).ToList();
+            //reverse the list
+            canvas.shapeList.Reverse();
+            //use a streamwriter to write the canvas to an SVG file
+            using(StreamWriter sw = new StreamWriter(fileName))
+            {
+                //create the output string
+                String output = canvas.ToString();
+                //for each shape in the list add it to the canvas
+                foreach(Shape shape in canvas.shapeList)
+                {
+                    //insert the stringified shape inside the canvas (we reversed the list so that we can insert each new shape below the old one)
+                    output = output.Insert(output.IndexOf(">") + 1, "\n" + "\t" + shape.ToString());
+                }
+                sw.Write(output); 
+            }
+            Console.WriteLine("\nCanvas saved to SVG file.\n");
+        }
+        public override void Undo()
+        {
+            Console.WriteLine("Cannot undo action: save canvas to SVG file\n");
+        }
+    }
+    // -------------------- print child class --------------------
+    public class print : Command
+    {
+        //create variable for the class
+        Canvas canvas;
+        //print the canvas to the console method constructor
+        public print(Canvas theCanvas)
+        {
+            canvas = theCanvas;
+        }
+        public override void Do()
+        {
+            foreach(Shape shape in canvas.shapeList)
+            {
+                Console.WriteLine(shape.ToConsole());
+            }
+            Console.WriteLine("");
+        }
+        public override void Undo()
+        {
+            Console.WriteLine("Cannot undo action: print canvas to console\n");
+        }
+    }
+}
